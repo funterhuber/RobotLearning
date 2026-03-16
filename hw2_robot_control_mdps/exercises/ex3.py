@@ -23,7 +23,7 @@ def reset_robot(default_qpos: np.ndarray) -> np.ndarray:
     """
     noise = np.random.uniform(-0.5, 0.5, size=default_qpos.shape)
     return default_qpos + noise
-    
+
 
 
 def reset_target_position(base_pos: np.ndarray) -> np.ndarray:

@@ -103,7 +103,7 @@ def ik_track(model, data, site_name, target_pos,
         # TODO: check if the 2-norm of the position error is within a small threshold (1e-3), if yes, break the loop -yes
         if np.linalg.norm(err_pos) < 1e-3:
             break
-        
+
         # Get the Jacobian of the end-effector using mj_jacSite.
         jacp = np.zeros((3, num_joints)) # position Jacobian
         jacr = np.zeros((3, num_joints)) # orientation Jacobian

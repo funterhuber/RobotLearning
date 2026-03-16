@@ -58,4 +58,3 @@ def pid_control(tracking_error_history, timestep, Kp=150.0, Ki=0.0, Kd=0.01):
     signal = Kp * p + Ki * i + Kd * d
     return signal
 
-            

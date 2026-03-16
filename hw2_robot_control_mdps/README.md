@@ -2,7 +2,6 @@
 
 * **Due Date: 12.03.26 23:59 CET**
 * **Needs to be solved individually. Gradescope checks for duplicate code.**
-* **Video deliverables have to be uploaded in one video covering all video requirements of 3 exercises, less than 5:30 min in total, 4:30 min without bonus question**
 # Installation
 
 Follow the instructions in the [Installation_Guide.md](Installation_Guide.md) to install the required packages and dependencies.
@@ -203,7 +202,6 @@ While this is not necessary for the completion of the exercises, if you are inte
 Now that you have implemented the environment blocks, let us train the 
 policy with `scripts/train.py`. Please refer to `scripts/train.py` for the training arguments; there is no need to modify any arguments besides `--max_iterations` and `--save_checkpt_freq`. While the script is running, you can open a new terminal and track the training progress and rewards in real time, running the following from the hw2_so100_tutorial folder:
 
-`tensorboard --logdir=logs --port=6006/`
 
 Then open the TensorBoard at the provided link (http://localhost:6006) in your browser.
 
