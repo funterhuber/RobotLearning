@@ -19,7 +19,12 @@ def generate_quintic_spline_waypoints(start, end, num_points):
     Returns:
         np.ndarray: Generated waypoints.
     """
-    raise NotImplementedError()
+    timesteps = np.linspace(0, 1, num=num_points)
+    f_s = 10*timesteps**3 - 15*timesteps**4 + 6*timesteps**5
+    f_s = f_s[:, np.newaxis]
+    interpolated_waypoints = start + (end - start) * f_s
+    return interpolated_waypoints
+
 
 
 def pid_control(tracking_error_history, timestep, Kp=150.0, Ki=0.0, Kd=0.01):
@@ -44,5 +49,12 @@ def pid_control(tracking_error_history, timestep, Kp=150.0, Ki=0.0, Kd=0.01):
     Returns:
         np.ndarray: Control signal.
     """
-    raise NotImplementedError()
-            
+    p = tracking_error_history[-1]
+    i = np.sum(tracking_error_history, axis=0) * timestep
+    if len(tracking_error_history) < 2:
+        d = np.zeros_like(p)
+    else:
+        d = (tracking_error_history[-1] - tracking_error_history[-2]) / timestep
+    signal = Kp * p + Ki * i + Kd * d
+    return signal
+

@@ -204,7 +204,6 @@ While this is not necessary for the completion of the exercises, if you are inte
 Now that you have implemented the environment blocks, let us train the 
 policy with `scripts/train.py`. Please refer to `scripts/train.py` for the training arguments; there is no need to modify any arguments besides `--max_iterations` and `--save_checkpt_freq`. While the script is running, you can open a new terminal and track the training progress and rewards in real time, running the following from the hw2_so100_tutorial folder:
 
-`tensorboard --logdir=logs --port=6006`
 
 Then open the TensorBoard at the provided link (http://localhost:6006) in your browser.
 

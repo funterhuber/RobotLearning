@@ -23,7 +23,7 @@ def reset_robot(default_qpos: np.ndarray) -> np.ndarray:
     """
     noise = np.random.uniform(-0.5, 0.5, size=default_qpos.shape)
     return default_qpos + noise
-
+    
 
 
 def reset_target_position(base_pos: np.ndarray) -> np.ndarray:
@@ -40,6 +40,19 @@ def reset_target_position(base_pos: np.ndarray) -> np.ndarray:
     Returns:
     - target_pos: np.ndarray. The 3D position of the target relative to the base. Dimensionality: 1D array, Shape: (3,).
     """
+    # base_pos_values = np.zeros(3)
+    # base_pos_values[0] = base_pos[0] + np.random.uniform(0.2, 0.4)
+    # base_pos_values[1] = base_pos[1] + np.random.uniform(-0.2, 0.2)
+    # base_pos_values[2] = base_pos[2] + np.random.uniform(0.1, 0.4)
+    # base_pos[:] = base_pos_values
+    # return base_pos
+    offset = np.array([
+        np.random.uniform(0.2, 0.4),
+        np.random.uniform(-0.2, 0.2),
+        np.random.uniform(0.1, 0.4)
+    ])
+    target_pos_w = base_pos + offset
+    return target_pos_w
 
 
 def process_action(action: np.ndarray, jnt_range: np.ndarray) -> np.ndarray:
@@ -61,7 +74,7 @@ def process_action(action: np.ndarray, jnt_range: np.ndarray) -> np.ndarray:
     return target_qpos
 
 
-def compute_reward(ee_tracking_error: float) -> float:
+def compute_reward(ee_tracking_error: float, qvel, action, action_diff) -> float:
     """
     TODO: 
     Calculate the reward based on the distance (error) to the target. 
@@ -82,15 +95,18 @@ def compute_reward(ee_tracking_error: float) -> float:
     - reward: float. The computed reward based on the tracking error. Dimensionality: scalar
     """
     dense_reward = np.exp(-2 * ee_tracking_error)
-    if ee_tracking_error < 0.005:
+    if ee_tracking_error < 0.003:
         sparse_reward = 1.0
     else:
         sparse_reward = 0.0
 
-    return dense_reward + sparse_reward
+    vel_penalty = 0.002 * np.sum(np.square(qvel))
+    action_penalty = 0.002 * np.sum(np.square(action))
+    continuity_penalty = 0.01 * np.sum(np.square(action_diff))
+    return dense_reward + sparse_reward - vel_penalty - action_penalty - continuity_penalty
 
 
-def get_obs(qpos: np.ndarray, ee_pos_w: np.ndarray, ee_rot_w: np.ndarray, base_pos_w: np.ndarray, base_rot_w: np.ndarray, target_pos_w: np.ndarray) -> np.ndarray:
+def get_obs(qpos: np.ndarray, qvel, ee_pos_w: np.ndarray, ee_rot_w: np.ndarray, base_pos_w: np.ndarray, base_rot_w: np.ndarray, target_pos_w: np.ndarray, prev_action) -> np.ndarray:
     """
     TODO: Extract the observation vector from the environment robot state variables. 
 
@@ -119,5 +135,5 @@ def get_obs(qpos: np.ndarray, ee_pos_w: np.ndarray, ee_rot_w: np.ndarray, base_p
     ee_pos_base = base_rot_w.T @ (ee_pos_w - base_pos_w)
     ee_quat_base = quat_normalize(quat_mul(quat_conjugate(rot_mat_to_quat(base_rot_w)),rot_mat_to_quat(ee_rot_w)))
     target_pos_base = base_rot_w.T @ (target_pos_w - base_pos_w)
-    return np.hstack([qpos, ee_pos_base, ee_quat_base, target_pos_base])
+    return np.hstack([qpos, qvel, ee_pos_base, ee_quat_base, target_pos_base, prev_action])
 

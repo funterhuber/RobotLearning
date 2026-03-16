@@ -5,7 +5,7 @@ from stable_baselines3.common.monitor import Monitor
 
 from __init__ import *
 from utils import *
-from env.so100_tracking_env import SO100TrackEnv
+from env.so100_tracking_env_bonus import SO100TrackEnv
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train PPO on SO100 tracking")

@@ -23,7 +23,7 @@ def parse_args():
 def reset_env(model, data):
     data.qpos[:] = reset_robot(env.default_qpos)
     data.mocap_pos[0] = reset_target_position(data.body("Base").xpos.copy())
-     
+
 def policy_callback(model, data):
     step_count = getattr(policy_callback, "step_count", 0)
     if step_count == 0:
@@ -42,8 +42,8 @@ def policy_callback(model, data):
 
 if __name__ == "__main__":
     args = parse_args()
-    policy_path = EXP_DIR / f"so100_tracking_{args.load_run}" / f"model_{args.checkpoint}.zip" 
-    
+    policy_path = EXP_DIR / f"so100_tracking_{args.load_run}" / f"model_{args.checkpoint}.zip"
+
     env = SO100TrackEnv(xml_path=XML_PATH, render_mode=None)
     max_num_episodes = 10
     play_episode_length_s = 2
@@ -59,6 +59,13 @@ if __name__ == "__main__":
             mujoco.mj_step(env.model, env.data)
             viewer.sync()
             time.sleep(env.model.opt.timestep)
+
+
+    # Schritt 2: Den BLOCKIERENDEN Viewer starten (funktioniert auf Mac mit normalem Python)
+    # Diese Zeile ersetzt den kompletten 'with launch_passive' Block und die while-Schleife
+    #print("Starte Viewer... Schließe das Fenster, um die Auswertung zu beenden.")
+    #mujoco.viewer.launch(env.model, env.data)
+
     mujoco.set_mjcb_control(None)
 
     avg_ee_tracking_error = np.mean(policy_callback.total_ee_tracking_errors)

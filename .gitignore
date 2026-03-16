@@ -1,0 +1,23 @@
+# macOS System Files
+.DS_Store
+
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+env/
+venv/
+hw2_robot_control_mdps/mujoco/lib/
+hw2_robot_control_mdps/mujoco/bin/
+hw2_robot_control_mdps/mujoco/include/
+
+# Large Media & Images
+*.mov
+*.mp4
+*.png
+*.jpg
+
+# Logs and History Files
+.Rhistory
+MUJOCO_LOG.TXT
+*.log

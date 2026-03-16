@@ -7,7 +7,6 @@ from stable_baselines3 import PPO
 
 from __init__ import *
 from utils import refresh_markers
-from env.so100_tracking_env import SO100TrackEnv
 from exercises.ex1 import build_keypoints
 
 
@@ -46,11 +45,12 @@ def policy_callback(model, data):
 
 if __name__ == "__main__":
     args = parse_args()
-    policy_path = EXP_DIR / f"so100_tracking_{args.load_run}" / f"model_{args.checkpoint}.zip" 
+    policy_path = EXP_DIR / f"so100_tracking_{args.load_run}" / f"model_{args.checkpoint}.zip"
     
     env = SO100TrackEnv(xml_path=XML_PATH, render_mode=None)
     play_episode_length_s = 5
     play_episode_length = int(play_episode_length_s / env.ctrl_timestep)
+
 
     keypoints = build_keypoints(count=20, width=0.2, x_offset=0.3, z_offset=0.25)
     env.data.mocap_pos[0] = keypoints[0]
