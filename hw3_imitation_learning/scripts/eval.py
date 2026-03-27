@@ -148,7 +148,7 @@ def run_episode(
                 if k2 == ord(" ") or k2 == 27:
                     break
 
-        time.sleep(env.dt_ctrl)
+        #time.sleep(env.dt_ctrl)
 
     return False, False, check_wrong_cube_in_bin(env) if multicube else None
 
