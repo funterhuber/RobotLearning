@@ -19,6 +19,7 @@ import zarr as zarr_lib
 from hw3.dataset import (
     Normalizer,
     SO100ChunkDataset,
+    augment_multicube_noise,
     load_and_merge_zarrs,
     load_zarr,
 )
@@ -28,10 +29,10 @@ from hw3.model import BasePolicy, build_policy
 from torch.utils.data import DataLoader, random_split
 
 # TODO: Choose your own hyperparameters!
-EPOCHS = ... 
-BATCH_SIZE = ...
-LR = ...
-VAL_SPLIT = 0.1
+EPOCHS = 60
+BATCH_SIZE = 16
+LR = 2e-3
+VAL_SPLIT = 0.2
 
 
 def train_one_epoch(
@@ -46,8 +47,16 @@ def train_one_epoch(
 
     for batch in loader:
         states, action_chunks = batch
-        # TODO: Implement the training step for one batch here.
-        # This mostly: Get states and action_chunks onto the correct device, compute the loss, and step the optimizer.
+        states = states.to(device)
+        action_chunks = action_chunks.to(device)
+
+        optimizer.zero_grad()
+        loss = model.compute_loss(states, action_chunks)
+        loss.backward()
+        optimizer.step()
+
+        total_loss += loss.item()
+        n_batches += 1
 
     return total_loss / max(n_batches, 1)
 
@@ -64,7 +73,12 @@ def evaluate(
 
     for batch in loader:
         states, action_chunks = batch
-        # TODO: Implement the evaluation step for one batch here.
+        states = states.to(device)
+        action_chunks = action_chunks.to(device)
+
+        loss = model.compute_loss(states, action_chunks)
+        total_loss += loss.item()
+        n_batches += 1
 
     return total_loss / max(n_batches, 1)
 
@@ -103,11 +117,20 @@ def main() -> None:
         "Supports column slicing with [:N], [M:], [M:N]. "
         "If omitted, uses the action_key attribute from the zarr metadata.",
     )
-    parser.add_argument("--seed", type=int, default=42, help="Random seed.")
+    parser.add_argument(
+        "--extra-zarr",
+        type=Path,
+        nargs="+",
+        default=None,
+        dest="extra_zarr",
+        help="Additional .zarr stores to merge with --zarr.",
+    )
+    parser.add_argument("--augment-colors", action="store_true", help="Augment multicube data with color permutations (6x).")
+    parser.add_argument("--seed", type=int, default=35, help="Random seed.")
     args = parser.parse_args()
 
     torch.manual_seed(args.seed)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "mps")
     print(f"Device: {device}")
 
     # ── load data ─────────────────────────────────────────────────────
@@ -128,6 +151,9 @@ def main() -> None:
             state_keys=args.state_keys,
             action_keys=args.action_keys,
         )
+    if args.augment_colors:
+        states, actions, ep_ends = augment_multicube_noise(states, actions, ep_ends)
+
     normalizer = Normalizer.from_data(states, actions)
 
     dataset = SO100ChunkDataset(
@@ -160,14 +186,19 @@ def main() -> None:
         state_dim=states.shape[1],
         action_dim=actions.shape[1],
         # TODO: build with your desired specifications
+        chunk_size=args.chunk_size,
+        hidden_dim=512,
+        num_layers=5,
+        activation="Gelu",
+        dropout=0.1
     ).to(device)
 
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Model parameters: {n_params:,}")
 
     # TODO: implement an optimizer and scheduler
-    # optimizer =
-    # scheduler =
+    optimizer = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=1e-4)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5)
 
     # ── training loop ─────────────────────────────────────────────────
     best_val = float("inf")
@@ -222,6 +253,10 @@ def main() -> None:
                     "action_keys": args.action_keys,
                     "state_dim": int(states.shape[1]),
                     "action_dim": int(actions.shape[1]),
+                    "d_model": 512,
+                    "num_layers": 5,
+                    "activation": "Gelu",
+                    "dropout": 0.1,
                     "val_loss": val_loss,
                 },
                 save_path,

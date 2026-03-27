@@ -155,6 +155,60 @@ def load_and_merge_zarrs(
     return merged_states, merged_actions, merged_ep_ends
 
 
+def augment_multicube_noise(
+    states: np.ndarray,
+    actions: np.ndarray,
+    episode_ends: np.ndarray,
+    n_copies: int = 3,
+    pos_noise: float = 0.003,
+    seed: int = 42,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Augment multi-cube data by adding small noise to positions.
+
+    Creates n_copies noisy duplicates of the dataset. Noise is added to
+    ee_xyz, cube positions, and goal_pos. Actions and goal one-hot are
+    kept unchanged. This creates genuinely different training samples
+    that help the policy generalize.
+
+    Expects the 19-dim multitask state layout:
+        ee_xyz(3) + gripper(1) + red(3) + green(3) + blue(3) + goal(3) + goal_pos(3)
+    """
+    rng = np.random.default_rng(seed)
+
+    # Indices of position columns to add noise to
+    pos_slices = [
+        slice(0, 3),    # ee_xyz
+        slice(4, 7),    # red cube
+        slice(7, 10),   # green cube
+        slice(10, 13),  # blue cube
+        slice(16, 19),  # goal_pos
+    ]
+
+    aug_states = [states]
+    aug_actions = [actions]
+    aug_ep_ends = [episode_ends]
+    offset = int(episode_ends[-1])
+
+    for _ in range(n_copies):
+        s = states.copy()
+        for sl in pos_slices:
+            noise = rng.normal(0, pos_noise, size=s[:, sl].shape).astype(np.float32)
+            s[:, sl] = s[:, sl] + noise
+
+        aug_states.append(s)
+        aug_actions.append(actions.copy())
+        aug_ep_ends.append(episode_ends + offset)
+        offset += int(episode_ends[-1])
+
+    total_copies = 1 + n_copies
+    print(f"Noise augmentation: {len(episode_ends)} -> {len(episode_ends) * total_copies} episodes ({total_copies}x, sigma={pos_noise})")
+    return (
+        np.concatenate(aug_states, axis=0),
+        np.concatenate(aug_actions, axis=0),
+        np.concatenate(aug_ep_ends, axis=0),
+    )
+
+
 def build_valid_indices(episode_ends: np.ndarray, chunk_size: int) -> np.ndarray:
     """Return flat indices where a full action chunk of length ``chunk_size`` fits.
 
