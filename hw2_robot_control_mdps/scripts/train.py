@@ -7,6 +7,7 @@ from __init__ import *
 from utils import *
 from env.so100_tracking_env_bonus import SO100TrackEnv
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Train PPO on SO100 tracking")
     parser.add_argument("--num_envs", type=int, default=16,

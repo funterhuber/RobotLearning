@@ -7,6 +7,7 @@ from stable_baselines3 import PPO
 
 from __init__ import *
 from utils import refresh_markers
+from env.so100_tracking_env_bonus import SO100TrackEnv
 from exercises.ex1 import build_keypoints
 
 
